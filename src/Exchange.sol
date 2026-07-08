@@ -41,7 +41,9 @@ contract Exchange {
     ) private pure returns (uint256) {
         require(inputReserve > 0 && outputReserve > 0, "invalid reserves");
 
-        return ((inputAmount * outputReserve) / (inputReserve + inputAmount));
+        return
+            ((inputAmount * outputReserve) / (inputReserve + inputAmount)) *
+            1000;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -58,7 +60,7 @@ contract Exchange {
 
         uint256 tokenReserve = getReserve();
 
-        return  getAmount(_ethSold, etherReserve, tokenReserve);
+        return getAmount(_ethSold, etherReserve, tokenReserve);
     }
 
     /// @notice Détermine la quantité de Ether à obtenir en fournissant `_tokenSold` de Tokens
@@ -73,5 +75,36 @@ contract Exchange {
         uint256 ethReserve = address(this).balance;
 
         return getAmount(_tokenSold, tokenReserve, ethReserve);
+    }
+
+    function ethToTokenSwap(uint256 _minTokens) public payable {
+        uint256 tokenReserve = getReserve();
+
+        uint256 tokensBought = getAmount(
+            msg.value,
+            address(this).balance - msg.value,
+            tokenReserve
+        );
+
+        require(tokensBought >= _minTokens, "insufficient output amount");
+
+        IERC20(tokenAddress).transfer(msg.sender, tokensBought);
+    }
+
+    function tokenToEthSwap(uint256 _tokenSold, uint256 _minEth) public {
+        uint256 tokenReserve = getReserve();
+        uint256 ethBought = getAmount(
+            _tokenSold,
+            tokenReserve,
+            address(this).balance
+        );
+
+        require(ethBought >= _minEth, "Insufficient output amount");
+
+        // Transfert des Tokens à l'adresse du contract Exchange
+        IERC20(tokenAddress).transferFrom(msg.sender, address(this), ethBought);
+
+        // Transfert des Ethers reçu après le swap à l'adresse de `msg.sender`
+        payable(msg.sender).transfer(ethBought);
     }
 }
