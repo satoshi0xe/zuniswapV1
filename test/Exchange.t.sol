@@ -11,9 +11,9 @@ contract ExchangeTest is Test {
     /////////////////////////////////////////
 
     // 1000 ETH et 2000 Tokens (avec 18 décimales
-    uint256 constant TOKEN_ALLOWED_TO_SPEND = 2000 ether;
-    uint256 constant ETHER_ALLOWED_TO_SPEND = 1000 ether;
-    uint256 constant INITIAL_TOKEN = 3000 ether;
+    uint256 constant TOKEN_ALLOWED_TO_SPEND = 2500 ether;
+    uint256 constant ETHER_ALLOWED_TO_SPEND = 500 ether;
+    uint256 constant INITIAL_TOKEN = 5000 ether;
 
     /*//////////////////////////////////////////////////////////////
                     Token ERC20 ↔ ETH Exchange                  
@@ -112,5 +112,26 @@ contract ExchangeTest is Test {
 
         assert(tokensOut == 1000000000000000000000);
         assert(ethersOut == 500000000000000000000);
+    }
+
+    function test_UserCanPerformEthToTokenSwap() public {
+        address trader = makeAddr("trader");
+        vm.deal(trader, 10 ether);
+
+        console2.log("Trader ethers: ", (address(trader).balance / 1e18));
+        console2.log("Trader tokens: ", (token.balanceOf(trader) / 1e18));
+        console2.log("Exchange Ethers: ", (address(exchange).balance / 1e18));
+        console2.log("Exchange Tokens: ", (token.balanceOf(address(exchange)) / 1e18));
+
+        vm.prank(trader);
+        // Swaps 2 ether against 3.99 Tokens
+        exchange.ethToTokenSwap{value: 2 ether}(3 ether);
+
+        console2.log("Trader ethers balance after swap: ", (address(trader).balance / 1e18));
+        console2.log("Trader tokens balance after swap: ", (token.balanceOf(trader) / 1e18));
+        // assert(address(trader).balance == 10 ether);
+
+
+        // vm.prank(trader);
     }
 }
