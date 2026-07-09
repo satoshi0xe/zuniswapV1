@@ -16,7 +16,7 @@ contract ExchangeTest is Test {
     uint256 constant INITIAL_TOKEN = 5000 ether;
 
     /*//////////////////////////////////////////////////////////////
-                    Token ERC20 ↔ ETH Exchange                  
+                    Token ERC20 ↔ ETH Exchange
     //////////////////////////////////////////////////////////////*/
 
     Token token;
@@ -43,9 +43,7 @@ contract ExchangeTest is Test {
         // -------------------------------------------------------------
         // STEP 2: Ajouter de la liquidité dans la pool (Token / ETH)
         // -------------------------------------------------------------
-        exchange.addLiquidity{value: ETHER_ALLOWED_TO_SPEND}(
-            TOKEN_ALLOWED_TO_SPEND
-        );
+        exchange.addLiquidity{value: ETHER_ALLOWED_TO_SPEND}(TOKEN_ALLOWED_TO_SPEND);
     }
 
     function test_ExchangeTestInitialBalance() public view {
@@ -66,17 +64,11 @@ contract ExchangeTest is Test {
 
         /// Prix du Ether/Token
         /// 1 Ether equivaut à combien de Tokens ?
-        uint256 etherPerTokenPricing = exchange.getPrice(
-            etherReserve,
-            tokenReserve
-        );
+        uint256 etherPerTokenPricing = exchange.getPrice(etherReserve, tokenReserve);
 
         /// Prix Token/Ether
         /// 1 Token équivaut à combien de Ethers ?
-        uint256 tokenPerTokenPricing = exchange.getPrice(
-            tokenReserve,
-            etherReserve
-        );
+        uint256 tokenPerTokenPricing = exchange.getPrice(tokenReserve, etherReserve);
 
         console2.log("Eth/Token: ", etherPerTokenPricing);
         console2.log("Token/Eth: ", tokenPerTokenPricing);
@@ -130,7 +122,6 @@ contract ExchangeTest is Test {
         console2.log("Trader ethers balance after swap: ", (address(trader).balance / 1e18));
         console2.log("Trader tokens balance after swap: ", (token.balanceOf(trader) / 1e18));
         // assert(address(trader).balance == 10 ether);
-
 
         // vm.prank(trader);
     }

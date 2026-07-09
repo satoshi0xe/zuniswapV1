@@ -14,36 +14,33 @@ contract Exchange {
 
     function addLiquidity(uint256 _tokenAmount) public payable {
         IERC20 token = IERC20(tokenAddress);
-        token.transferFrom(msg.sender, address(this), _tokenAmount);
+        bool success = token.transferFrom(msg.sender, address(this), _tokenAmount);
+
+        require(success, "failed to add liquidity");
     }
 
     function getReserve() public view returns (uint256) {
         return IERC20(tokenAddress).balanceOf(address(this));
     }
 
-    function getPrice(
-        uint256 inputReserve,
-        uint256 outputReserve
-    ) public pure returns (uint256) {
+    function getPrice(uint256 inputReserve, uint256 outputReserve) public pure returns (uint256) {
         require(inputReserve > 0 && outputReserve > 0, "invalid reserves");
 
-        return (inputReserve * 1000) / outputReserve;
+        return (inputReserve) / outputReserve;
     }
 
     /// @notice Δy = Δxy / (x + Δx) Calcule la qté du jetons à obtenir (Ether/Token) ou (Token/Ether)
     /// @param inputAmount Δx: Jeton que l'on apporte
     /// @param inputReserve x: Réserve du jeton que l'on apporte
     /// @param outputReserve y: Réserve du jeton que l'on veut en échange
-    function getAmount(
-        uint256 inputAmount,
-        uint256 inputReserve,
-        uint256 outputReserve
-    ) private pure returns (uint256) {
+    function getAmount(uint256 inputAmount, uint256 inputReserve, uint256 outputReserve)
+        private
+        pure
+        returns (uint256)
+    {
         require(inputReserve > 0 && outputReserve > 0, "invalid reserves");
 
-        return
-            ((inputAmount * outputReserve) / (inputReserve + inputAmount)) *
-            1000;
+        return (inputAmount * outputReserve) / (inputReserve + inputAmount);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -80,29 +77,25 @@ contract Exchange {
     function ethToTokenSwap(uint256 _minTokens) public payable {
         uint256 tokenReserve = getReserve();
 
-        uint256 tokensBought = getAmount(
-            msg.value,
-            address(this).balance - msg.value,
-            tokenReserve
-        );
+        uint256 tokensBought = getAmount(msg.value, address(this).balance - msg.value, tokenReserve);
 
         require(tokensBought >= _minTokens, "insufficient output amount");
 
-        IERC20(tokenAddress).transfer(msg.sender, tokensBought);
+        bool success = IERC20(tokenAddress).transfer(msg.sender, tokensBought);
+
+        require(success, "transfer failed");
     }
 
     function tokenToEthSwap(uint256 _tokenSold, uint256 _minEth) public {
         uint256 tokenReserve = getReserve();
-        uint256 ethBought = getAmount(
-            _tokenSold,
-            tokenReserve,
-            address(this).balance
-        );
+        uint256 ethBought = getAmount(_tokenSold, tokenReserve, address(this).balance);
 
         require(ethBought >= _minEth, "Insufficient output amount");
 
         // Transfert des Tokens à l'adresse du contract Exchange
-        IERC20(tokenAddress).transferFrom(msg.sender, address(this), ethBought);
+        bool success = IERC20(tokenAddress).transferFrom(msg.sender, address(this), ethBought);
+
+        require(success, "Token to Eth swap failed");
 
         // Transfert des Ethers reçu après le swap à l'adresse de `msg.sender`
         payable(msg.sender).transfer(ethBought);
