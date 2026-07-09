@@ -43,7 +43,9 @@ contract ExchangeTest is Test {
         // -------------------------------------------------------------
         // STEP 2: Ajouter de la liquidité dans la pool (Token / ETH)
         // -------------------------------------------------------------
-        exchange.addLiquidity{value: ETHER_ALLOWED_TO_SPEND}(TOKEN_ALLOWED_TO_SPEND);
+        exchange.addLiquidity{value: ETHER_ALLOWED_TO_SPEND}(
+            TOKEN_ALLOWED_TO_SPEND
+        );
     }
 
     function test_ExchangeTestInitialBalance() public view {
@@ -64,11 +66,17 @@ contract ExchangeTest is Test {
 
         /// Prix du Ether/Token
         /// 1 Ether equivaut à combien de Tokens ?
-        uint256 etherPerTokenPricing = exchange.getPrice(etherReserve, tokenReserve);
+        uint256 etherPerTokenPricing = exchange.getPrice(
+            etherReserve,
+            tokenReserve
+        );
 
         /// Prix Token/Ether
         /// 1 Token équivaut à combien de Ethers ?
-        uint256 tokenPerTokenPricing = exchange.getPrice(tokenReserve, etherReserve);
+        uint256 tokenPerTokenPricing = exchange.getPrice(
+            tokenReserve,
+            etherReserve
+        );
 
         console2.log("Eth/Token: ", etherPerTokenPricing);
         console2.log("Token/Eth: ", tokenPerTokenPricing);
@@ -113,16 +121,43 @@ contract ExchangeTest is Test {
         console2.log("Trader ethers: ", (address(trader).balance / 1e18));
         console2.log("Trader tokens: ", (token.balanceOf(trader) / 1e18));
         console2.log("Exchange Ethers: ", (address(exchange).balance / 1e18));
-        console2.log("Exchange Tokens: ", (token.balanceOf(address(exchange)) / 1e18));
+        console2.log(
+            "Exchange Tokens: ",
+            (token.balanceOf(address(exchange)) / 1e18)
+        );
 
         vm.prank(trader);
-        // Swaps 2 ether against 3.99 Tokens
-        exchange.ethToTokenSwap{value: 2 ether}(3 ether);
+        // Swaps 2 ether against ~10 (9,996) Tokens
+        exchange.ethToTokenSwap{value: 2 ether}(8 ether);
 
-        console2.log("Trader ethers balance after swap: ", (address(trader).balance / 1e18));
-        console2.log("Trader tokens balance after swap: ", (token.balanceOf(trader) / 1e18));
-        // assert(address(trader).balance == 10 ether);
+        console2.log(
+            "Trader ethers balance after swap: ",
+            (address(trader).balance / 1e18)
+        );
+        console2.log(
+            "Trader tokens balance after swap: ",
+            (token.balanceOf(trader) / 1e18)
+        );
 
-        // vm.prank(trader);
+        assert(address(trader).balance == 8000000000000000000); // 8 ether
+        assert(token.balanceOf(trader) == 9960159362549800796); // 9,996 Tokens
+
+        vm.prank(trader);
+        exchange.ethToTokenSwap{value: 3 ether}(7 ether);
+
+        assertEq(token.balanceOf(trader), 24752475247524752474); // ~25 Tokens
     }
+    // @Round 1 - Balance initiale:
+    // @Contract: 2500 Tokens & 500 ethers
+    // @Ratio:  1 ether == ~5 Tokens (4,998)
+    // @UserA: 10 ethers & 0 Token
+
+    // 1. @UserA Swaps 2 Ether => (9.96 Tokens ~ 10)
+    // @UserA: 8 ethers & 10 Tokens
+    // @Contract: 2500-10 = 2 490 Tokens & 502 ethers
+
+    // @Round 2 - Balance:
+    // @contract: 2 490 Tokens & 502 ethers
+    // @UserB: 5 ethers & 0 Token
+    // @Ratio: 1 ether == 5 Tokens
 }
